@@ -1,14 +1,24 @@
 import { Button, Col, Image, Nav, Row, Spinner } from 'react-bootstrap';
 import ProfilePostCard from './ProfilePostCard';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { AuthContext } from './AuthProvider';
+import { useContext, useEffect } from 'react';
+import { fetchPostsByUser } from '../features/posts/postSlice';
 
 export default function ProfileMidBody() {
 
     const url = "https://pbs.twimg.com/profile_banners/83072625/1602845571/1500x500";
     const pic = "https://pbs.twimg.com/profile_images/1587405892437221376/h167Jlb2_400x400.jpg";
 
+    const dispatch = useDispatch();
     const posts = useSelector(store => store.posts.posts);
     const loading = useSelector(store => store.posts.loading);
+    const { currentUser } = useContext(AuthContext);
+
+    useEffect(() => {
+        dispatch(fetchPostsByUser(currentUser.uid));
+    }, [dispatch, currentUser])
+
 
     return (
         <Col sm={6} className='bg-light' style={{ border: "1px solid lightgray" }}>
@@ -68,8 +78,8 @@ export default function ProfileMidBody() {
             {loading && (
                 <Spinner animation="border" className="ms-3 mt-3" variant="primary" />
             )}
-            {posts.length > 0 && posts.map((post) => (
-                <ProfilePostCard key={post.id} content={post.content} postId={post.id} />
+            {posts.map((post) => (
+                <ProfilePostCard key={post.id} post={post} />
             ))}
         </Col>
     )
