@@ -5,7 +5,7 @@ import { AuthContext } from "./AuthProvider";
 import { likePost, removeLikeFromPost } from "../features/posts/postSlice";
 
 export default function ProfilePostCard({ post }) {
-    const { content, id: postId } = post;
+    const { content, id: postId, imageUrl } = post;
     const [likes, setLikes] = useState(post.likes || []);
     const dispatch = useDispatch();
     const { currentUser } = useContext(AuthContext);
@@ -43,6 +43,7 @@ export default function ProfilePostCard({ post }) {
                 <strong>Haris</strong>
                 <span> @haris.samingan · Apr 16</span>
                 <p>{content}</p>
+                <Image src={imageUrl} style={{ width: 150 }} />
                 <div className="d-flex justify-content-between">
                     <Button variant="light">
                         <i className="bi bi-chat"></i>
