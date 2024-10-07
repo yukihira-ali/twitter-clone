@@ -1,7 +1,41 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { db, storage } from '../../firebase';
-import { collection, getDocs, doc, getDoc, setDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+
+export const updatePost = createAsyncThunk(
+    "posts/updatesPost",
+    async ({ userId, postId, newPostContent, newFile }) => {
+        try {
+            let newImageUrl;
+            if (newFile) {
+                const imageRef = ref(storage, `posts/${newFile.name}`);
+                const response = await uploadBytes(imageRef, newFile);
+                newImageUrl = await getDownloadURL(response.ref);
+            }
+            const postRef = doc(db, `users/${userId}/posts/${postId}`);
+            const postSnap = await getDoc(postRef);
+
+            if (postSnap.exists()) {
+                const postData = postSnap.data();
+                const updatedData = {
+                    ...postData,
+                    content: newPostContent || postData.content,
+                    imageUrl: newImageUrl || postData.imageUrl,
+                };
+                await updateDoc(postRef, updatedData);
+
+                const updatedPost = { id: postId, ...updatedData };
+                return updatedPost;
+            } else {
+                throw new Error("Post does not exist");
+            }
+        } catch (error) {
+            console.log(error);
+            throw error;
+        }
+    }
+);
 
 export const fetchPostsByUser = createAsyncThunk(
     "posts/fetchByUser",
@@ -27,11 +61,18 @@ export const savePost = createAsyncThunk(
     "posts/savePost",
     async ({ userId, postContent, file }) => {
         try {
-            const imageRef = ref(storage, `posts/${file.name}`);
-            const response = await uploadBytes(imageRef, file);
-            const imageUrl = await getDownloadURL(response.ref);
+            let imageUrl = "";
+            console.log(file);
+            if (file !== null) {
+                const imageRef = ref(storage, `posts/${file.name}`);
+                const response = await uploadBytes(imageRef, file);
+                imageUrl = await getDownloadURL(response.ref);
+            }
+
+
             const postsRef = collection(db, `users/${userId}/posts`);
             console.log(`users/${userId}/posts`);
+
             //Since no Id is given, firestore auto generate a unique ID for this new document
 
             const newPostRef = doc(postsRef);
@@ -129,6 +170,15 @@ const postsSlice = createSlice({
                     state.posts[postIndex].likes = state.posts[postIndex].likes.filter((id) => id !== userId);
                 }
             })
+            .addCase(updatePost.fulfilled, (state, action) => {
+                const updatedPost = action.payload;
+                const postIndex = state.posts.findIndex(
+                    (post) => post.id === updatedPost.id
+                );
+                if (postIndex !== -1) {
+                    state.posts[postIndex] = updatedPost;
+                }
+            });
     },
 });
 
