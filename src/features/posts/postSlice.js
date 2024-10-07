@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { db, storage } from '../../firebase';
-import { collection, getDocs, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 
 export const updatePost = createAsyncThunk(
@@ -33,6 +33,20 @@ export const updatePost = createAsyncThunk(
         } catch (error) {
             console.log(error);
             throw error;
+        }
+    }
+);
+
+export const deletePost = createAsyncThunk(
+    "posts/deletePost",
+    async ({ userId, postId }) => {
+        try {
+            const postRef = doc(db, `users/${userId}/posts/${postId}`)
+            await deleteDoc(postRef);
+            return postId;
+        } catch (error) {
+            console.error(error);
+            throw error
         }
     }
 );
@@ -178,6 +192,10 @@ const postsSlice = createSlice({
                 if (postIndex !== -1) {
                     state.posts[postIndex] = updatedPost;
                 }
+            })
+            .addCase(deletePost.fulfilled, (state, action) => {
+                const deletedPostId = action.payload;
+                state.posts = state.posts.filter((post) => post.id !== deletedPostId);
             });
     },
 });
