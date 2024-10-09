@@ -3,7 +3,7 @@ import { Button, Col, Image, Row } from "react-bootstrap";
 import { useDispatch } from "react-redux";
 import { AuthContext } from "./AuthProvider";
 import { likePost, removeLikeFromPost, deletePost } from "../features/posts/postSlice";
-import UpdatePostModal from "./updatePostModal";
+import UpdatePostModal from "./UpdatePostModal";
 
 export default function ProfilePostCard({ post }) {
     const { content, id: postId, imageUrl } = post;
